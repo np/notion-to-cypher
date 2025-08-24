@@ -1,0 +1,44 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        ghc-version: ['9.6']
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Haskell
+      uses: haskell-actions/setup@v2
+      with:
+        ghc-version: ${{ matrix.ghc-version }}
+        cabal-version: 'latest'
+        
+    - name: Cache cabal packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cabal/packages
+          ~/.cabal/store
+          dist-newstyle
+        key: ${{ runner.os }}-cabal-${{ matrix.ghc-version }}-${{ hashFiles('**/*.cabal', 'cabal.project*') }}
+        restore-keys: |
+          ${{ runner.os }}-cabal-${{ matrix.ghc-version }}-
+          ${{ runner.os }}-cabal-
+          
+    - name: Update cabal package index
+      run: cabal update
+      
+    - name: Build project
+      run: cabal build
+      
+    - name: Check executable runs
+      run: cabal run notion-to-memgraph -- --help
