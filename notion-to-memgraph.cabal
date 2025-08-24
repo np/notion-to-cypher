@@ -1,0 +1,36 @@
+cabal-version:       3.0
+name:                notion-to-memgraph
+version:             0.1.0.0
+build-type:          Simple
+license:             MIT
+license-file:        LICENSE
+author:              np
+maintainer:          np
+synopsis:            Transform Notion database query JSON into Cypher for Neo4j/Memgraph
+category:            Tools
+
+library
+  exposed-modules:     Notion.Model, Cypher.Emit, Transform
+  hs-source-dirs:      src
+  build-depends:       base ^>=4.14 || ^>=4.15 || ^>=4.16 || ^>=4.17 || ^>=4.18
+                     , aeson ^>=2.1
+                     , bytestring ^>=0.10
+                     , text ^>=1.2 || ^>=2.0
+                     , unordered-containers ^>=0.2
+                     , vector ^>=0.12
+                     , scientific ^>=0.3
+                     , containers ^>=0.6
+  default-language:    Haskell2010
+
+executable notion-to-memgraph
+  hs-source-dirs:      app
+  main-is:             Main.hs
+  build-depends:       base
+                     , notion-to-memgraph
+                     , aeson
+                     , bytestring
+                     , text
+                     , unordered-containers
+                     , vector
+                     , optparse-applicative ^>=0.18
+  default-language:    Haskell2010
