@@ -2,7 +2,7 @@ cabal-version:       3.0
 name:                notion-to-memgraph
 version:             0.1.0.0
 build-type:          Simple
-license:             MIT
+license:             BSD3
 license-file:        LICENSE
 author:              np
 maintainer:          np
