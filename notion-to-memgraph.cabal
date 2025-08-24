@@ -34,3 +34,15 @@ executable notion-to-memgraph
                      , vector
                      , optparse-applicative >=0.18
   default-language:    Haskell2010
+
+executable notion-to-memgraph-web
+  hs-source-dirs:      app
+  main-is:             Web.hs
+  build-depends:       base
+                     , notion-to-memgraph
+                     , aeson
+                     , bytestring
+                     , text
+                     , wai >=3.2
+                     , warp >=3.3
+  default-language:    Haskell2010
