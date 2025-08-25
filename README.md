@@ -21,6 +21,26 @@ Entrée depuis un fichier ou stdin. Label par défaut: NotionPage.
 
 `cat notion_query.json | cabal run notion-to-memgraph -- --label MyPage > graph.cypher`
 
+## Serveur Web
+
+Un serveur HTTP minimal expose la transformation en webhook.
+
+```
+cabal run notion-to-memgraph-web
+```
+
+Envoyez une requête `POST` avec le JSON Notion sur `http://localhost:8080/?label=MonLabel`
+pour recevoir la requête Cypher en réponse.
+
+## Docker
+
+Un `Dockerfile` minimal construit l'exécutable web :
+
+```
+docker build -t notion-to-memgraph .
+docker run -p 8080:8080 notion-to-memgraph
+```
+
 ## Modèle de graphe
 
 Un nœud page par élément `results[] : (:NotionPage {id, title, url, archived, created_time, last_edited_time, ...})`.
