@@ -53,7 +53,7 @@ select/multi_select/status → nœuds `(:NotionOption {id,name,color,property})`
 
 relation → arêtes `(page)-[:REL__{prop}]->(page) (MERGE le nœud cible par id).`
 
-Toutes les clés/labels/relations sont assainis pour Cypher (sanitizeProp/Rel/Label). Les chaînes sont échappées.
+Les labels, relations et noms de propriété sont entourés de backticks (les backticks internes sont doublés). Les chaînes sont échappées.
 Limitations
 
 *    Ne gère pas les rollups et quelques types exotiques non listés.

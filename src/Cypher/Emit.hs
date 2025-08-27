@@ -4,14 +4,11 @@ module Cypher.Emit
   , emitMap
   , emitList
   , emitString
-  , sanitizeProp
-  , sanitizeRel
-  , sanitizeLabel
+  , quote
   ) where
 
 import qualified Data.Text as T
 import           Data.Scientific (Scientific)
-import           Data.Char (isAlphaNum, toLower, toUpper)
 
 data CyVal
   = CyS T.Text
@@ -41,26 +38,9 @@ emitList xs = T.concat ["[", T.intercalate ", " (map emitVal xs), "]"]
 
 emitMap :: [(T.Text, CyVal)] -> T.Text
 emitMap kvs =
-  let pairs = [ T.concat [sanitizeProp k, ": ", emitVal v] | (k,v) <- kvs ]
+  let pairs = [ T.concat [quote k, ": ", emitVal v] | (k,v) <- kvs ]
   in T.concat ["{", T.intercalate ", " pairs, "}"]
 
-sanitizeProp :: T.Text -> T.Text
-sanitizeProp = safeLower
-  where
-    safeLower t =
-      let t' = T.map toLower $ T.map (\c -> if isAlphaNum c then c else '_') t
-          prefixed = if T.null t' || not (isAlphaNum (T.head t')) || T.head t' `elem` ['0'..'9'] then T.cons 'p' (T.cons '_' t') else t'
-      in squash prefixed
-    squash = T.intercalate "_" . filter (not . T.null) . T.split (=='_')
 
-sanitizeRel :: T.Text -> T.Text
-sanitizeRel t =
-  let base = T.map (\c -> if isAlphaNum c then toUpper c else '_') t
-      b1   = if T.null base || T.head base `elem` ['0'..'9'] then T.cons 'R' (T.cons '_' base) else base
-  in T.intercalate "_" $ filter (not . T.null) (T.split (=='_') b1)
-
-sanitizeLabel :: T.Text -> T.Text
-sanitizeLabel t =
-  let base = T.map (\c -> if isAlphaNum c then c else '_') t
-      b2   = if T.null base || T.head base `elem` ['0'..'9'] then T.cons 'L' (T.cons '_' base) else base
-  in b2
+quote :: T.Text -> T.Text
+quote t = T.concat ["`", T.replace "`" "``" t, "`"]

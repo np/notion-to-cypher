@@ -15,7 +15,7 @@ transformToCypher pageLabel dq =
 
 emitPage :: T.Text -> Page -> [T.Text]
 emitPage pageLabel p =
-  let lblPage = sanitizeLabel pageLabel
+  let lblPage = quote pageLabel
       pageNode = T.concat
         [ "MERGE (p:", lblPage, " {id: ", emitString (pageId p), "})"
         , "\nSET p += "
@@ -23,9 +23,9 @@ emitPage pageLabel p =
         , ";\n"
         ]
       rels = concat
-        [ emitSelectRels lblPage (pageId p) (pageProperties p)
-        , emitPeopleRels lblPage (pageId p) (pageProperties p)
-        , emitRelationRels lblPage (pageId p) (pageProperties p)
+        [ emitSelectRels pageLabel (pageId p) (pageProperties p)
+        , emitPeopleRels pageLabel (pageId p) (pageProperties p)
+        , emitRelationRels pageLabel (pageId p) (pageProperties p)
         ]
   in [pageNode] <> rels
 
@@ -55,57 +55,57 @@ pageScalarProps props = concatMap flattenKV (HM.toList props)
     flattenKV (k,v) =
       case v of
         PVTitle _         -> []
-        PVRichText rts    -> [(sanitizeProp k, CyS (T.concat (map rtPlain rts)))]
-        PVNumber mn       -> maybe [] (\n -> [(sanitizeProp k, CyN n)]) mn
-        PVCheckbox b      -> [(sanitizeProp k, CyB b)]
-        PVUrl mt          -> maybe [] (\t -> [(sanitizeProp k, CyS t)]) mt
-        PVEmail mt        -> maybe [] (\t -> [(sanitizeProp k, CyS t)]) mt
-        PVPhone mt        -> maybe [] (\t -> [(sanitizeProp k, CyS t)]) mt
+        PVRichText rts    -> [(k, CyS (T.concat (map rtPlain rts)))]
+        PVNumber mn       -> maybe [] (\n -> [(k, CyN n)]) mn
+        PVCheckbox b      -> [(k, CyB b)]
+        PVUrl mt          -> maybe [] (\t -> [(k, CyS t)]) mt
+        PVEmail mt        -> maybe [] (\t -> [(k, CyS t)]) mt
+        PVPhone mt        -> maybe [] (\t -> [(k, CyS t)]) mt
         PVDate md         -> case md of
                                Nothing -> []
                                Just (DateRange s e tz) ->
-                                 [ (sanitizeProp (k <> "_start"), CyS s) ]
-                                 <> maybe [] (\x -> [(sanitizeProp (k <> "_end"), CyS x)]) e
-                                 <> maybe [] (\x -> [(sanitizeProp (k <> "_tz"),  CyS x)]) tz
+                                [ (k <> "_start", CyS s) ]
+                                <> maybe [] (\x -> [(k <> "_end", CyS x)]) e
+                                <> maybe [] (\x -> [(k <> "_tz",  CyS x)]) tz
         PVFormula fv      -> formulaKVs k fv
         PVUniqueId (UniqueId mp mn) ->
-          maybe [] (\x -> [(sanitizeProp (k <> "_prefix"), CyS x)]) mp
-          <> maybe [] (\x -> [(sanitizeProp (k <> "_number"), CyN x)]) mn
+          maybe [] (\x -> [(k <> "_prefix", CyS x)]) mp
+          <> maybe [] (\x -> [(k <> "_number", CyN x)]) mn
         PVStatus mo       -> case mo of
                                Nothing -> []
-                               Just (SelectOption _ name _) -> [(sanitizeProp k, CyS name)]
+                               Just (SelectOption _ name _) -> [(k, CyS name)]
         PVSelect mo       -> case mo of
                                Nothing -> []
-                               Just (SelectOption _ name _) -> [(sanitizeProp k, CyS name)]
+                               Just (SelectOption _ name _) -> [(k, CyS name)]
         PVMultiSelect os  ->
           let names = map (\(SelectOption _ n _) -> CyS n) os
-          in if null names then [] else [(sanitizeProp (k <> "_list"), CyL names)]
+          in if null names then [] else [(k <> "_list", CyL names)]
         PVFiles fs        ->
           let urls = [ CyS u | FileRef _ u <- fs ]
-          in if null urls then [] else [(sanitizeProp (k <> "_urls"), CyL urls)]
+          in if null urls then [] else [(k <> "_urls", CyL urls)]
         PVPeople _        -> []
         PVRelation _      -> []
-        PVCreatedTime mt  -> maybe [] (\t -> [(sanitizeProp k, CyS t)]) mt
-        PVLastEditedTime mt-> maybe [] (\t -> [(sanitizeProp k, CyS t)]) mt
+        PVCreatedTime mt  -> maybe [] (\t -> [(k, CyS t)]) mt
+        PVLastEditedTime mt-> maybe [] (\t -> [(k, CyS t)]) mt
         PVCreatedBy mu    -> maybe [] (\(UserLite i n tt) ->
-                                  [(sanitizeProp (k <> "_id"), CyS i)]
-                                  <> maybe [] (\x -> [(sanitizeProp (k <> "_name"), CyS x)]) n
-                                  <> maybe [] (\x -> [(sanitizeProp (k <> "_type"), CyS x)]) tt) mu
+                                  [(k <> "_id", CyS i)]
+                                  <> maybe [] (\x -> [(k <> "_name", CyS x)]) n
+                                  <> maybe [] (\x -> [(k <> "_type", CyS x)]) tt) mu
         PVLastEditedBy mu -> maybe [] (\(UserLite i n tt) ->
-                                  [(sanitizeProp (k <> "_id"), CyS i)]
-                                  <> maybe [] (\x -> [(sanitizeProp (k <> "_name"), CyS x)]) n
-                                  <> maybe [] (\x -> [(sanitizeProp (k <> "_type"), CyS x)]) tt) mu
+                                  [(k <> "_id", CyS i)]
+                                  <> maybe [] (\x -> [(k <> "_name", CyS x)]) n
+                                  <> maybe [] (\x -> [(k <> "_type", CyS x)]) tt) mu
         PVUnsupported _ _ -> []
     formulaKVs k = \case
-      FvString ms -> maybe [] (\s -> [(sanitizeProp k, CyS s)]) ms
-      FvNumber mn -> maybe [] (\n -> [(sanitizeProp k, CyN n)]) mn
-      FvBool   mb -> maybe [] (\b -> [(sanitizeProp k, CyB b)]) mb
+      FvString ms -> maybe [] (\s -> [(k, CyS s)]) ms
+      FvNumber mn -> maybe [] (\n -> [(k, CyN n)]) mn
+      FvBool   mb -> maybe [] (\b -> [(k, CyB b)]) mb
       FvDate   md -> case md of
         Nothing -> []
         Just (DateRange s e tz) ->
-          [ (sanitizeProp (k <> "_start"), CyS s) ]
-          <> maybe [] (\x -> [(sanitizeProp (k <> "_end"), CyS x)]) e
-          <> maybe [] (\x -> [(sanitizeProp (k <> "_tz"),  CyS x)]) tz
+          [ (k <> "_start", CyS s) ]
+          <> maybe [] (\x -> [(k <> "_end", CyS x)]) e
+          <> maybe [] (\x -> [(k <> "_tz",  CyS x)]) tz
       FvUnknown _ -> []
 
 emitRelationRels :: T.Text -> T.Text -> HM.HashMap T.Text PropertyValue -> [T.Text]
@@ -114,9 +114,9 @@ emitRelationRels pageLabel pid props =
   where
     one (k, PVRelation rs) =
       [ T.concat
-        [ "MATCH (p:", sanitizeLabel pageLabel, " {id: ", emitString pid, "})\n"
-        , "MERGE (q:", sanitizeLabel pageLabel, " {id: ", emitString (rrId r), "})\n"
-        , "MERGE (p)-[:", "REL__", sanitizeRel k, "]->(q);\n"
+        [ "MATCH (p:", quote pageLabel, " {id: ", emitString pid, "})\n"
+        , "MERGE (q:", quote pageLabel, " {id: ", emitString (rrId r), "})\n"
+        , "MERGE (p)-[:", quote ("REL__" <> k), "]->(q);\n"
         ]
       | r <- rs
       ]
@@ -128,11 +128,11 @@ emitPeopleRels pageLabel pid props =
   where
     one (k, PVPeople us) =
       [ T.concat
-        [ "MATCH (p:", sanitizeLabel pageLabel, " {id: ", emitString pid, "})\n"
+        [ "MATCH (p:", quote pageLabel, " {id: ", emitString pid, "})\n"
         , "MERGE (u:NotionUser {id: ", emitString (uId u), "})\n"
         , maybe "" (\nm -> T.concat ["SET u.name = ", emitString nm, "\n"]) (uName u)
         , maybe "" (\tp -> T.concat ["SET u.user_type = ", emitString tp, "\n"]) (uType u)
-        , "MERGE (p)-[:", "HAS_PERSON__", sanitizeRel k, "]->(u);\n"
+        , "MERGE (p)-[:", quote ("HAS_PERSON__" <> k), "]->(u);\n"
         ]
       | u <- us
       ]
@@ -144,12 +144,12 @@ emitSelectRels pageLabel pid props =
   where
     emitOpt k opt =
       T.concat
-        [ "MATCH (p:", sanitizeLabel pageLabel, " {id: ", emitString pid, "})\n"
+        [ "MATCH (p:", quote pageLabel, " {id: ", emitString pid, "})\n"
         , "MERGE (o:NotionOption {id: ", emitString (soId opt), "})\n"
         , "SET o.name = ", emitString (soName opt), "\n"
         , maybe "" (\c -> T.concat ["SET o.color = ", emitString c, "\n"]) (soColor opt)
         , "SET o.property = ", emitString k, "\n"
-        , "MERGE (p)-[:", "HAS_OPTION__", sanitizeRel k, "]->(o);\n"
+        , "MERGE (p)-[:", quote ("HAS_OPTION__" <> k), "]->(o);\n"
         ]
     one (k, PVSelect (Just o)) = [emitOpt k o]
     one (k, PVStatus (Just o)) = [emitOpt k o]
