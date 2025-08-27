@@ -20,7 +20,7 @@ emitPage pageLabel p =
         [ "MERGE (p:", lblPage, " {id: ", emitString (pageId p), "})"
         , "\nSET p += "
         , emitMap (pageBaseProps p <> pageScalarProps (pageProperties p))
-        , ";\n"
+        , "\n"
         ]
       rels = concat
         [ emitSelectRels pageLabel (pageId p) (pageProperties p)
@@ -116,7 +116,7 @@ emitRelationRels pageLabel pid props =
       [ T.concat
         [ "MATCH (p:", quote pageLabel, " {id: ", emitString pid, "})\n"
         , "MERGE (q:", quote pageLabel, " {id: ", emitString (rrId r), "})\n"
-        , "MERGE (p)-[:", quote ("REL__" <> k), "]->(q);\n"
+        , "MERGE (p)-[:", quote ("REL__" <> k), "]->(q)\n"
         ]
       | r <- rs
       ]
@@ -132,7 +132,7 @@ emitPeopleRels pageLabel pid props =
         , "MERGE (u:NotionUser {id: ", emitString (uId u), "})\n"
         , maybe "" (\nm -> T.concat ["SET u.name = ", emitString nm, "\n"]) (uName u)
         , maybe "" (\tp -> T.concat ["SET u.user_type = ", emitString tp, "\n"]) (uType u)
-        , "MERGE (p)-[:", quote ("HAS_PERSON__" <> k), "]->(u);\n"
+        , "MERGE (p)-[:", quote ("HAS_PERSON__" <> k), "]->(u)\n"
         ]
       | u <- us
       ]
@@ -149,7 +149,7 @@ emitSelectRels pageLabel pid props =
         , "SET o.name = ", emitString (soName opt), "\n"
         , maybe "" (\c -> T.concat ["SET o.color = ", emitString c, "\n"]) (soColor opt)
         , "SET o.property = ", emitString k, "\n"
-        , "MERGE (p)-[:", quote ("HAS_OPTION__" <> k), "]->(o);\n"
+        , "MERGE (p)-[:", quote ("HAS_OPTION__" <> k), "]->(o)\n"
         ]
     one (k, PVSelect (Just o)) = [emitOpt k o]
     one (k, PVStatus (Just o)) = [emitOpt k o]
