@@ -8,7 +8,7 @@ import           Data.Maybe (fromMaybe, isJust)
 import           Network.Wai (Application, Request, Response, responseLBS, requestMethod, queryString, strictRequestBody)
 import           Network.Wai.Handler.Warp (run)
 import           Network.HTTP.Types (status200, status400, methodPost)
-import           Data.Aeson (eitherDecode, encode)
+import           Data.Aeson (eitherDecode, encode, object, (.=))
 import           Transform (transformToCypher, transformToCypherList)
 import           Notion.Model (DatabaseQuery)
 
@@ -33,7 +33,9 @@ app req respond
           if asJSON
             then
               let cyphers = transformToCypherList label (dq :: DatabaseQuery)
-              in respond $ responseLBS status200 [("Content-Type", "application/json")] (encode cyphers)
+                  stmtObjs = map (\c -> object ["statement" .= T.snoc c ';']) cyphers
+                  body = encode (object ["statements" .= stmtObjs])
+              in respond $ responseLBS status200 [("Content-Type", "application/json")] body
             else
               let cypher = transformToCypher label (dq :: DatabaseQuery)
               in respond $ responseLBS status200 [("Content-Type", "text/plain")] (BL.fromStrict $ TE.encodeUtf8 cypher)

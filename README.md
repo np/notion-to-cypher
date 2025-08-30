@@ -21,7 +21,7 @@ Entrée depuis un fichier ou stdin. Label par défaut: NotionPage.
 
 `cat notion_query.json | cabal run notion-to-memgraph -- --label MyPage > graph.cypher`
 
-Ajoutez `--json` pour obtenir un tableau JSON de requêtes Cypher sans point-virgule :
+Ajoutez `--json` pour obtenir un objet JSON de la forme `{"statements": [{"statement": "MATCH (n) RETURN n;"}]}` :
 
 ```
 cat notion_query.json | cabal run notion-to-memgraph -- --json > queries.json
@@ -38,7 +38,7 @@ cabal run notion-to-memgraph-web
 Envoyez une requête `POST` avec le JSON Notion sur `http://localhost:8080/?label=MonLabel`
 pour recevoir la requête Cypher en réponse.
 
-Ajoutez `json=1` à l'URL pour une réponse `application/json` contenant un tableau de requêtes :
+Ajoutez `json=1` à l'URL pour une réponse `application/json` de la forme `{"statements": [{"statement": "..."}]}` :
 
 ```
 curl -XPOST 'http://localhost:8080/?json=1' --data @notion_query.json
