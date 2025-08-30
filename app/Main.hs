@@ -5,7 +5,7 @@ import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import           Options.Applicative
-import           Data.Aeson (eitherDecode, encode)
+import           Data.Aeson (eitherDecode, encode, object, (.=))
 import           Notion.Model
 import           Transform
 
@@ -29,5 +29,8 @@ main = do
     Left e -> fail e
     Right dq ->
       if asJSON
-        then BL.putStr $ encode (transformToCypherList label dq)
+        then
+          let stmts = transformToCypherList label dq
+              stmtObjs = map (\s -> object ["statement" .= T.snoc s ';']) stmts
+          in BL.putStr $ encode (object ["statements" .= stmtObjs])
         else TIO.putStrLn $ transformToCypher label dq
